@@ -266,8 +266,8 @@ workflows:
           requires:
             - test
             - test_docker
-            filters:
-              branches:
-                only: /.*/
-              tags:
-                only: /v\d+\.\d+\.\d+$/
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /v\d+\.\d+\.\d+$/
