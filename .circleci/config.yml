@@ -199,6 +199,15 @@ jobs:
             - ./node_modules
       - store_artifacts:
           path: ~/
+  docker-deployment:
+    hub:
+      owner: cbinyu
+      tag: /.*/
+      commands:
+        - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker push cbinyu/${CIRCLE_PROJECT_REPONAME,,}:latest; fi :
+            timeout: 21600
+        - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker tag cbinyu/${CIRCLE_PROJECT_REPONAME,,} cbinyu/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG && docker push cbinyu/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG; fi :
+            timeout: 21600
 
 workflows:
   version: 2
@@ -253,13 +262,12 @@ workflows:
               ignore: /.*/
             tags:
               only: /v\d+\.\d+\.\d+$/
-
-deployment:
-  hub:
-    owner: cbinyu
-    tag: /.*/
-    commands:
-      - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker push cbinyu/${CIRCLE_PROJECT_REPONAME,,}:latest; fi :
-          timeout: 21600
-      - if [[ -n "$DOCKER_PASS" ]]; then docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS && docker tag cbinyu/${CIRCLE_PROJECT_REPONAME,,} cbinyu/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG && docker push cbinyu/${CIRCLE_PROJECT_REPONAME,,}:$CIRCLE_TAG; fi :
-          timeout: 21600
+      - docker-deployment:
+          requires:
+            - test
+            - test_docker
+            filters:
+              branches:
+                only: /.*/
+              tags:
+                only: /v\d+\.\d+\.\d+$/
