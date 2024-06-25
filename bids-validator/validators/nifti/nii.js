@@ -155,7 +155,7 @@ export default function NIFTI(
           ) {
             let BolusCutOffDelayTime = mergedDictionary['BolusCutOffDelayTime']
             const BolusCutOffDelayTimeWarning = BolusCutOffDelayTime.filter(
-              x => x > 10,
+              (x) => x > 10,
             )
             if (BolusCutOffDelayTimeWarning.length > 0) {
               issues.push(
@@ -174,9 +174,8 @@ export default function NIFTI(
             mergedDictionary['BolusCutOffDelayTime'].constructor === Array
           ) {
             let BolusCutOffDelayTime = mergedDictionary['BolusCutOffDelayTime']
-            const MonotonicallyIncreasingBolusCutOffDelayTime = isMonotonicIncreasingArray(
-              BolusCutOffDelayTime,
-            )
+            const MonotonicallyIncreasingBolusCutOffDelayTime =
+              isMonotonicIncreasingArray(BolusCutOffDelayTime)
             if (!MonotonicallyIncreasingBolusCutOffDelayTime) {
               issues.push(
                 new Issue({
@@ -372,7 +371,9 @@ export default function NIFTI(
                 }),
               )
             }
-            const LabelingDurationWarning = LabelingDuration.filter(x => x > 10)
+            const LabelingDurationWarning = LabelingDuration.filter(
+              (x) => x > 10,
+            )
             if (LabelingDurationWarning.length > 0) {
               issues.push(
                 new Issue({
@@ -443,7 +444,7 @@ export default function NIFTI(
             }),
           )
         }
-        const PostLabelingDelayWarning = PostLabelingDelay.filter(x => x > 10)
+        const PostLabelingDelayWarning = PostLabelingDelay.filter((x) => x > 10)
         if (PostLabelingDelayWarning.length > 0) {
           issues.push(
             new Issue({
@@ -789,8 +790,8 @@ export default function NIFTI(
 
     if (bval && bvec && header) {
       /*
-        bvec length ==3 is checked at bvec.spec.js hence following if loop does not have else block
-        */
+              bvec length ==3 is checked at bvec.spec.js hence following if loop does not have else block
+              */
       if (bvec.replace(/^\s+|\s+$/g, '').split('\n').length === 3) {
         const volumes = [
           bvec
@@ -810,7 +811,7 @@ export default function NIFTI(
         ]
 
         if (
-          !volumes.every(function(v) {
+          !volumes.every(function (v) {
             return v === volumes[0]
           })
         ) {
@@ -1096,9 +1097,8 @@ export default function NIFTI(
           )
         }
         let VolumeTiming = mergedDictionary['VolumeTiming']
-        const MonotonicallyIncreasingVolumeTiming = isMonotonicIncreasingArray(
-          VolumeTiming,
-        )
+        const MonotonicallyIncreasingVolumeTiming =
+          isMonotonicIncreasingArray(VolumeTiming)
         if (!MonotonicallyIncreasingVolumeTiming) {
           issues.push(
             new Issue({
@@ -1125,7 +1125,7 @@ export default function NIFTI(
             }),
           )
         }
-      } else if (mergedDictionary.RepetitionTime && header) {
+
         const niftiTR = Number(repetitionTime).toFixed(3)
         const jsonTR = Number(mergedDictionary.RepetitionTime).toFixed(3)
         if (niftiTR !== jsonTR) {
@@ -1150,10 +1150,11 @@ export default function NIFTI(
         mergedDictionary['SliceTiming'].constructor === Array
       ) {
         const SliceTimingArray = mergedDictionary['SliceTiming']
-        const valuesGreaterThanRepetitionTime = sliceTimingGreaterThanRepetitionTime(
-          SliceTimingArray,
-          mergedDictionary['RepetitionTime'],
-        )
+        const valuesGreaterThanRepetitionTime =
+          sliceTimingGreaterThanRepetitionTime(
+            SliceTimingArray,
+            mergedDictionary['RepetitionTime'],
+          )
         if (valuesGreaterThanRepetitionTime.length > 0) {
           issues.push(
             new Issue({
@@ -1256,12 +1257,101 @@ export default function NIFTI(
 
       for (let key = 0; key < intendedFor.length; key++) {
         const intendedForFile = intendedFor[key]
-        checkIfIntendedExists(intendedForFile, fileList, issues, file)
-        checkIfValidFiletype(intendedForFile, issues, file)
+        // Only check for presence of IntendedFor files if not a BIDS-URI
+        // https://github.com/bids-standard/bids-validator/issues/1393
+        if (!intendedForFile.startsWith('bids:')) {
+          checkIfIntendedExists(intendedForFile, fileList, issues, file)
+          checkIfValidFiletype(intendedForFile, issues, file)
+        }
       }
     }
   }
+
+  if (path.includes('_pet.nii')) {
+    issues.push(
+      ...checkPetRequiredFields(file, mergedDictionary, sidecarMessage),
+    )
+  }
+
   callback(issues)
+}
+
+export function checkPetRequiredFields(file, mergedDictionary, sidecarMessage) {
+  const issues = []
+  const requiredFields = [
+    'TracerName',
+    'TracerRadionuclide',
+    'InjectedRadioactivity',
+    'InjectedRadioactivityUnits',
+    'InjectedMass',
+    'InjectedMassUnits',
+    'SpecificRadioactivity',
+    'SpecificRadioactivityUnits',
+    'ModeOfAdministration',
+    'TimeZero',
+    'ScanStart',
+    'InjectionStart',
+    'FrameTimesStart',
+    'FrameDuration',
+    'AcquisitionMode',
+    'ImageDecayCorrected',
+    'ImageDecayCorrectionTime',
+    'ReconMethodName',
+    'ReconMethodParameterLabels',
+    'ReconFilterType',
+    'AttenuationCorrection',
+    'Manufacturer',
+    'ManufacturersModelName',
+    'Units',
+  ]
+  if (
+    mergedDictionary.hasOwnProperty('ModeOfAdministration') &&
+    mergedDictionary['ModeOfAdministration'] === 'bolus-infusion'
+  ) {
+    requiredFields.push(
+      'InfusionRadioactivity',
+      'InfusionStart',
+      'InfusionSpeed',
+      'InfusionSpeedUnits',
+      'InjectedVolume',
+    )
+  }
+  if (mergedDictionary.hasOwnProperty('ReconFilterType')) {
+    if (
+      typeof mergedDictionary['ReconFilterType'] === 'string' &&
+      mergedDictionary['ReconFilterType'] !== 'none'
+    ) {
+      requiredFields.push(
+        'ReconMethodParameterUnits',
+        'ReconMethodParameterValues',
+        'ReconFilterSize',
+      )
+    } else if (
+      typeof mergedDictionary['ReconFilterType'] !== 'string' &&
+      Array.isArray(mergedDictionary['ReconFilterType']) &&
+      mergedDictionary['ReconFilterType'].every(
+        (filterType) => filterType !== 'none',
+      )
+    ) {
+      requiredFields.push(
+        'ReconMethodParameterUnits',
+        'ReconMethodParameterValues',
+        'ReconFilterSize',
+      )
+    }
+  }
+  for (const field of requiredFields) {
+    if (!mergedDictionary.hasOwnProperty(field)) {
+      issues.push(
+        new Issue({
+          file: file,
+          code: 237,
+          reason: `You must define ${field} for this file. ${sidecarMessage}`,
+        }),
+      )
+    }
+  }
+  return issues
 }
 
 function missingEvents(path, potentialEvents, events) {
@@ -1281,7 +1371,7 @@ function missingEvents(path, potentialEvents, events) {
   // check for event file
   for (let j = 0; j < potentialEvents.length; j++) {
     const event = potentialEvents[j]
-    if (events.find(e => e.path == event)) {
+    if (events.find((e) => e.path == event)) {
       hasEvent = true
     }
   }
@@ -1342,7 +1432,7 @@ function checkIfIntendedExists(intendedForFile, fileList, issues, file) {
  *
  */
 
-function checkIfSeparateM0scanExists(m0scanFile, fileList, issues, file) {
+function checkIfSeparateM0scanExists(m0scanFile, fileList) {
   let rule = m0scanFile.replace('_m0scan.nii', '').replace('.gz', '')
   let m0scanFile_nii = m0scanFile.replace('.nii.gz', '.nii')
   let m0scanFile_niigz = m0scanFile
@@ -1364,12 +1454,9 @@ function checkIfSeparateM0scanExists(m0scanFile, fileList, issues, file) {
 }
 
 function matchRule_m0scan(str, rule) {
-  var escapeRegex = str => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1')
+  var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|[]\/\\])/g, '\\$1')
   return new RegExp(
-    rule
-      .split('*')
-      .map(escapeRegex)
-      .join('.*') + '_m0scan.nii',
+    rule.split('*').map(escapeRegex).join('.*') + '_m0scan.nii',
   ).test(str)
 }
 

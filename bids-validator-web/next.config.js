@@ -1,12 +1,11 @@
 // next.config.js
-const withTM = require("next-transpile-modules");
 
-module.exports = withTM({
-  transpileModules: ["bids-validator"],
-  assetPrefix: "./",
-  webpack5: false,
+module.exports = {
+  output: 'export',
+  transpilePackages: ['bids-validator'],
+  assetPrefix: './',
   webpack: (config, {}) => {
-    config.resolve.symlinks = false;
-    return config;
-  }
-});
+    config.watchOptions.ignored = '**/node_modules'
+    return config
+  },
+}

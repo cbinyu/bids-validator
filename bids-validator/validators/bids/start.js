@@ -17,29 +17,29 @@ import utils from '../../utils'
  * arguments to the callback.
  */
 const start = (dir, options, callback) => {
-  // eslint-disable-next-line
-  if (!options.json) console.log(`bids-validator@${version}\n`)
+  if (!options.json) {
+    // eslint-disable-next-line
+    console.log(`bids-validator@${version}`)
+  }
 
-  utils.options.parse(dir, options, function(issues, options) {
+  utils.options.parse(dir, options, async function (issues, options) {
     if (issues && issues.length > 0) {
       // option parsing issues
       callback({ config: issues })
     } else {
       BIDS.options = options
       reset(BIDS)
-      utils.files.readDir(dir, options).then(files => {
-        const couldBeBIDS = quickTest(files)
-        if (couldBeBIDS) {
-          // Is the dir using git-annex?
-          const annexed = utils.files.remoteFiles.isGitAnnex(dir)
-          fullTest(files, BIDS.options, annexed, dir, callback)
-        } else {
-          // Return an error immediately if quickTest fails
-          const issue = quickTestError(dir)
-          BIDS.summary.totalFiles = Object.keys(files).length
-          callback(utils.issues.format([issue], BIDS.summary, options))
-        }
-      })
+      const files = await utils.files.readDir(dir, options)
+      if (quickTest(files)) {
+        // Is the dir using git-annex?
+        const annexed = utils.files.remoteFiles.isGitAnnex(dir)
+        fullTest(files, BIDS.options, annexed, dir, callback)
+      } else {
+        // Return an error immediately if quickTest fails
+        const issue = quickTestError(dir)
+        BIDS.summary.totalFiles = Object.keys(files).length
+        callback(utils.issues.format([issue], BIDS.summary, options))
+      }
     }
   })
 }

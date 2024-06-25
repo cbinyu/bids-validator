@@ -11,6 +11,10 @@ const groupFileTypes = (fileList, options) => {
     bvec: [],
     contRecord: [],
     invalid: [],
+    ome: [],
+    jpg: [],
+    png: [],
+    tif: [],
     // used to check all files not already passed through testFile()
     misc: [],
   }
@@ -20,7 +24,7 @@ const groupFileTypes = (fileList, options) => {
 
 const sortFiles = (fileList, options, files) => {
   const keys = Object.keys(fileList)
-  keys.forEach(key => {
+  keys.forEach((key) => {
     const file = fileList[key]
     const filename = file.name
     if (utils.type.file.isStimuliData(file.relativePath)) {
@@ -52,13 +56,29 @@ const sortFiles = (fileList, options, files) => {
       files.misc.push(file)
     } else if (ofType(filename, 'tsv.gz')) {
       files.contRecord.push(file)
+    } else if (ofType(filename, 'ome.tif') || ofType(filename, 'ome.btf')) {
+      // collect ome-tiff
+      files.ome.push(file)
+    } else if (ofType(filename, 'jpg')) {
+      // collect jpg
+      files.jpg.push(file)
+    } else if (ofType(filename, 'png')) {
+      // collect png
+      files.png.push(file)
+    } else if (
+      // collect tif
+      ofType(filename, 'tif') &&
+      !ofType(filename, 'ome.tif') &&
+      !ofType(filename, 'ome.btf')
+    ) {
+      files.tif.push(file)
     } else {
       files.misc.push(file)
     }
   })
 }
 
-const ephysTest = filename => {
+const ephysTest = (filename) => {
   return [
     'edf',
     'vhdr',

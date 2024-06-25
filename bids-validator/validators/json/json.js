@@ -13,7 +13,7 @@ const Issue = utils.issues.Issue
  * it finds while validating against the BIDS
  * specification.
  */
-export default function(file, jsonContentsDict, callback) {
+export default function (file, jsonContentsDict, callback) {
   // primary flow --------------------------------------------------------------------
   let issues = []
   const potentialSidecars = utils.files.potentialLocations(file.relativePath)
@@ -74,7 +74,7 @@ const compareSidecarProperties = (file, sidecar) => {
   return issues
 }
 
-const selectSchema = file => {
+const selectSchema = (file) => {
   let schema = null
   if (file.name) {
     if (file.name.endsWith('participants.json')) {
@@ -88,6 +88,8 @@ const selectSchema = file => {
       schema = require('./schemas/asl.json')
     } else if (file.name.endsWith('pet.json')) {
       schema = require('./schemas/pet.json')
+    } else if (file.name.endsWith('nirs.json')) {
+      schema = require('./schemas/nirs.json')
     } else if (file.relativePath === '/dataset_description.json') {
       schema = require('./schemas/dataset_description.json')
     } else if (file.name.endsWith('meg.json')) {
@@ -96,6 +98,31 @@ const selectSchema = file => {
       schema = require('./schemas/ieeg.json')
     } else if (file.name.endsWith('eeg.json')) {
       schema = require('./schemas/eeg.json')
+    } else if (
+      file.name.endsWith('TEM.json') ||
+      file.name.endsWith('SEM.json') ||
+      file.name.endsWith('uCT.json') ||
+      file.name.endsWith('BF.json') ||
+      file.name.endsWith('DF.json') ||
+      file.name.endsWith('PC.json') ||
+      file.name.endsWith('DIC.json') ||
+      file.name.endsWith('FLUO.json') ||
+      file.name.endsWith('CONF.json') ||
+      file.name.endsWith('PLI.json') ||
+      file.name.endsWith('CARS.json') ||
+      file.name.endsWith('2PE.json') ||
+      file.name.endsWith('MPE.json') ||
+      file.name.endsWith('SR.json') ||
+      file.name.endsWith('NLO.json') ||
+      file.name.endsWith('OCT.json') ||
+      file.name.endsWith('SPIM.json')
+    ) {
+      schema = require('./schemas/microscopy.json')
+    } else if (
+      file.relativePath.includes('/micr') &&
+      file.name.endsWith('photo.json')
+    ) {
+      schema = require('./schemas/microscopy_photo.json')
     } else if (
       file.relativePath.includes('/meg/') &&
       file.name.endsWith('coordsystem.json')
@@ -112,12 +139,17 @@ const selectSchema = file => {
     ) {
       schema = require('./schemas/coordsystem_eeg.json')
     } else if (
+      file.relativePath.includes('/nirs/') &&
+      file.name.endsWith('coordsystem.json')
+    ) {
+      schema = require('./schemas/coordsystem_nirs.json')
+    } else if (file.name.endsWith('genetic_info.json')) {
+      schema = require('./schemas/genetic_info.json')
+    } else if (
       file.relativePath.includes('/pet/') &&
       file.name.endsWith('blood.json')
     ) {
       schema = require('./schemas/pet_blood.json')
-    } else if (file.name.endsWith('genetic_info.json')) {
-      schema = require('./schemas/genetic_info.json')
     } else if (
       file.name.endsWith('physio.json') ||
       file.name.endsWith('stim.json')
@@ -127,6 +159,10 @@ const selectSchema = file => {
       schema = require('./schemas/events.json')
     } else if (file.name.endsWith('beh.json')) {
       schema = require('./schemas/beh.json')
+    } else if (file.name.endsWith('_motion.json')) {
+      schema = require('./schemas/motion.json')
+    } else if (file.name.endsWith('_channels.json')) {
+      schema = require('./schemas/channels.json')
     }
   }
   return schema
@@ -138,7 +174,7 @@ const validateSchema = (file, sidecar, schema) => {
     const validate = ajv.compile(schema)
     const valid = validate(sidecar)
     if (!valid) {
-      validate.errors.map(error =>
+      validate.errors.map((error) =>
         issues.push(
           new Issue({
             file: file,

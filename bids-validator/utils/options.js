@@ -10,13 +10,14 @@ export default {
   /**
    * Parse
    */
-  parse: function(dir, args, callback) {
+  parse: function (dir, args, callback) {
     options = args ? args : {}
     options = {
       ignoreWarnings: Boolean(options.ignoreWarnings),
       ignoreNiftiHeaders: Boolean(options.ignoreNiftiHeaders),
       ignoreSymlinks: Boolean(options.ignoreSymlinks),
       ignoreSubjectConsistency: Boolean(options.ignoreSubjectConsistency),
+      blacklistModalities: options.blacklistModalities,
       verbose: Boolean(options.verbose),
       gitTreeMode: Boolean(options.gitTreeMode),
       remoteFiles: Boolean(options.remoteFiles),
@@ -24,7 +25,7 @@ export default {
       config: options.config || {},
     }
     if (options.config && typeof options.config !== 'boolean') {
-      this.parseConfig(dir, options.config, function(issues, config) {
+      this.parseConfig(dir, options.config, function (issues, config) {
         options.config = config
         callback(issues, options)
       })
@@ -41,7 +42,7 @@ export default {
   /**
    * Load Config
    */
-  loadConfig: function(dir, config, callback) {
+  loadConfig: function (dir, config, callback) {
     if (typeof config === 'string') {
       let configFile
       if (isNode) {
@@ -51,7 +52,7 @@ export default {
         configFile = { path: configPath }
       } else {
         // Grab file from FileList if a path was provided
-        configFile = [...dir].find(f => f.webkitRelativePath === config)
+        configFile = [...dir].find((f) => f.webkitRelativePath === config)
         // No matching config, return a default
         if (!configFile) {
           return callback(null, configFile, JSON.stringify({}))
@@ -59,10 +60,10 @@ export default {
       }
       configFile.stats = getFileStats(configFile)
       readFile(configFile)
-        .then(contents => {
+        .then((contents) => {
           callback(null, configFile, contents)
         })
-        .catch(issue => {
+        .catch((issue) => {
           // If the config does not exist, issue 44 is returned
           if (issue.code === 44) {
             callback(null, configFile, JSON.stringify({}))
@@ -78,8 +79,8 @@ export default {
   /**
    * Parse Config
    */
-  parseConfig: function(dir, config, callback) {
-    this.loadConfig(dir, config, function(issues, file, contents) {
+  parseConfig: function (dir, config, callback) {
+    this.loadConfig(dir, config, function (issues, file, contents) {
       if (issues) {
         callback(issues, null)
       } else {

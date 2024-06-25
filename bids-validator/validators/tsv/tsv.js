@@ -1,10 +1,11 @@
-import utils from '../../utils'
 import Issue from '../../utils/issues/issue'
 import checkAcqTimeFormat from './checkAcqTimeFormat'
 import checkAge89 from './checkAge89'
+import checkHeaders from './checkHeaders'
 import checkStatusCol from './checkStatusCol'
 import checkTypecol from './checkTypeCol'
 import parseTSV from './tsvParser'
+import checkMotionComponent from './checkMotionComponent'
 var path = require('path')
 
 /**
@@ -12,14 +13,15 @@ var path = require('path')
  * @param {Array[string]} headers
  * @returns {string}
  */
-const headersEvidence = headers => `Column headers: ${headers.join(', ')}`
+export const headersEvidence = (headers) =>
+  `Column headers: ${headers.join(', ')}`
 
 /**
  * Format TSV filename for evidence string
  * @param {Array[string]} filename
  * @returns {string}
  */
-const filenameEvidence = filename => `Filename: ${filename}`
+const filenameEvidence = (filename) => `Filename: ${filename}`
 
 /**
  * TSV
@@ -53,7 +55,12 @@ const TSV = (file, contents, fileList, callback) => {
   let emptyCells = false
   let NACells = false
 
-  for (let i = 0; i < rows.length; i++) {
+  // motion tsvs don't have headers
+  if (!file.name.endsWith('_motion.tsv')) {
+    checkHeaders(headers, file, issues)
+  }
+
+  for (let i = 1; i < rows.length; i++) {
     const values = rows[i]
     const evidence = `row ${i}: ${values.join('\t')}`
     if (values.length === 1 && /^\s*$/.test(values[0])) continue
@@ -109,7 +116,18 @@ const TSV = (file, contents, fileList, callback) => {
   }
 
   // specific file checks -----------------------------------------------------
-  const checkheader = function checkheader(headername, idx, file, code) {
+  const checkheader = function checkheader(
+    headername,
+    idx,
+    file,
+    missingCode,
+    orderCode = null,
+  ) {
+    let code = missingCode
+    if (headers.includes(headername) && orderCode) {
+      code = orderCode
+    }
+
     if (headers[idx] !== headername) {
       issues.push(
         new Issue({
@@ -149,7 +167,9 @@ const TSV = (file, contents, fileList, callback) => {
     // create full dataset path list
     const pathList = []
     for (let f in fileList) {
-      pathList.push(fileList[f].relativePath)
+      if (fileList.hasOwnProperty(f)) {
+        pathList.push(fileList[f].relativePath)
+      }
     }
 
     // check for stimuli file
@@ -194,7 +214,7 @@ const TSV = (file, contents, fileList, callback) => {
   ) {
     const participantIdColumn = headers.indexOf('participant_id')
 
-    // if the participant_id column is missing, an error 
+    // if the participant_id column is missing, an error
     // will be raised
     if (participantIdColumn === -1) {
       issues.push(
@@ -206,7 +226,7 @@ const TSV = (file, contents, fileList, callback) => {
         }),
       )
     } else {
-      // otherwise, the participants should comprise of 
+      // otherwise, the participants should comprise of
       // sub-<subject_id> and one subject per row
       participants = []
       for (let l = 1; l < rows.length; l++) {
@@ -222,14 +242,15 @@ const TSV = (file, contents, fileList, callback) => {
             new Issue({
               file: file,
               evidence: headersEvidence(headers),
-              reason: 'Participant_id column should be named ' +
-                      'as sub-<subject_id>.',
+              reason:
+                'Participant_id column should be named ' +
+                'as sub-<subject_id>.',
               line: l,
               code: 212,
             }),
           )
         }
-        
+
         // obtain a list of the subject IDs in the participants.tsv file
         const participant = row[participantIdColumn].replace('sub-', '')
         if (participant == 'emptyroom') {
@@ -240,13 +261,175 @@ const TSV = (file, contents, fileList, callback) => {
     }
   }
 
+  // samples.tsv
+  let samples = null
+  if (file.name === 'samples.tsv') {
+    const sampleIssues = []
+    const sampleIdColumnValues = []
+    const participantIdColumnValues = []
+    const sampleIdColumn = headers.indexOf('sample_id')
+    const participantIdColumn = headers.indexOf('participant_id')
+    const sampleTypeColumn = headers.indexOf('sample_type')
+
+    // if the sample_id column is missing, an error
+    // will be raised
+    if (sampleIdColumn === -1) {
+      sampleIssues.push(
+        new Issue({
+          file: file,
+          evidence: headersEvidence(headers),
+          line: 1,
+          code: 216,
+        }),
+      )
+    }
+    // if the participant_id column is missing, an error
+    // will be raised
+    if (participantIdColumn === -1) {
+      sampleIssues.push(
+        new Issue({
+          file: file,
+          evidence: headersEvidence(headers),
+          line: 1,
+          code: 217,
+        }),
+      )
+    }
+    // if the sample_type column is missing, an error
+    // will be raised
+    if (sampleTypeColumn === -1) {
+      sampleIssues.push(
+        new Issue({
+          file: file,
+          evidence: headersEvidence(headers),
+          line: 1,
+          code: 218,
+        }),
+      )
+    }
+    // Fold sampleIssues into main issue array, only needed it for this
+    // conditional.
+    issues.push(...sampleIssues)
+    if (sampleIssues.length === 0) {
+      // otherwise, the samples should comprise of
+      // sample-<sample_id> and one sample per row
+      samples = []
+      for (let l = 1; l < rows.length; l++) {
+        const row = rows[l]
+        // skip empty rows
+        if (!row || /^\s*$/.test(row)) {
+          continue
+        }
+        sampleIdColumnValues.push(row[sampleIdColumn])
+
+        // check if any incorrect patterns in sample_id column
+        if (!row[sampleIdColumn].startsWith('sample-')) {
+          issues.push(
+            new Issue({
+              file: file,
+              evidence: row[sampleIdColumn],
+              reason:
+                'sample_id column should be named ' + 'as sample-<sample_id>.',
+              line: l,
+              code: 215,
+            }),
+          )
+        }
+      }
+      // The participants should comprise of
+      // sub-<subject_id> and one subject per row
+      participants = []
+      for (let l = 1; l < rows.length; l++) {
+        const row = rows[l]
+        // skip empty rows
+        if (!row || /^\s*$/.test(row)) {
+          continue
+        }
+        participantIdColumnValues.push(row[participantIdColumn])
+
+        // check if any incorrect patterns in participant_id column
+        if (!row[participantIdColumn].startsWith('sub-')) {
+          issues.push(
+            new Issue({
+              file: file,
+              evidence: row[participantIdColumn],
+              reason:
+                'Participant_id column should be named ' +
+                'as sub-<subject_id>.',
+              line: l,
+              code: 212,
+            }),
+          )
+        }
+
+        // obtain a list of the sample IDs in the samples.tsv file
+        const sample = row[sampleIdColumn].replace('sample-', '')
+        if (sample == 'emptyroom') {
+          continue
+        }
+        samples.push(sample)
+      }
+
+      // check if a sample from same subject is described by one and only one row
+      let samplePartIdsSet = new Set()
+      for (let r = 0; r < rows.length - 1; r++) {
+        let uniqueString = sampleIdColumnValues[r].concat(
+          participantIdColumnValues[r],
+        )
+        // check if SampleId Have Duplicate
+        if (samplePartIdsSet.has(uniqueString)) {
+          issues.push(
+            new Issue({
+              file: file,
+              evidence: sampleIdColumnValues,
+              reason:
+                'Each sample from a same subject MUST be described by one and only one row.',
+              line: 1,
+              code: 220,
+            }),
+          )
+          break
+        } else samplePartIdsSet.add(uniqueString)
+      }
+    }
+
+    if (sampleTypeColumn !== -1) {
+      // check if any incorrect patterns in sample_type column
+      const validSampleTypes = [
+        'cell line',
+        'in vitro differentiated cells',
+        'primary cell',
+        'cell-free sample',
+        'cloning host',
+        'tissue',
+        'whole organisms',
+        'organoid',
+        'technical sample',
+      ]
+      for (let c = 1; c < rows.length; c++) {
+        const row = rows[c]
+        if (!validSampleTypes.includes(row[sampleTypeColumn])) {
+          issues.push(
+            new Issue({
+              file: file,
+              evidence: row[sampleTypeColumn],
+              reason: "sample_type can't be any value.",
+              line: c + 1,
+              code: 219,
+            }),
+          )
+        }
+      }
+    }
+  }
+
   if (
     file.relativePath.includes('/meg/') &&
     file.name.endsWith('_channels.tsv')
   ) {
-    checkheader('name', 0, file, 71)
-    checkheader('type', 1, file, 71)
-    checkheader('units', 2, file, 71)
+    checkheader('name', 0, file, 71, 230)
+    checkheader('type', 1, file, 71, 230)
+    checkheader('units', 2, file, 71, 230)
     checkStatusCol(rows, file, issues)
     checkTypecol(rows, file, issues)
   }
@@ -255,9 +438,9 @@ const TSV = (file, contents, fileList, callback) => {
     file.relativePath.includes('/eeg/') &&
     file.name.endsWith('_channels.tsv')
   ) {
-    checkheader('name', 0, file, 71)
-    checkheader('type', 1, file, 71)
-    checkheader('units', 2, file, 71)
+    checkheader('name', 0, file, 71, 230)
+    checkheader('type', 1, file, 71, 230)
+    checkheader('units', 2, file, 71, 230)
     checkStatusCol(rows, file, issues)
     checkTypecol(rows, file, issues)
   }
@@ -266,11 +449,45 @@ const TSV = (file, contents, fileList, callback) => {
     file.relativePath.includes('/ieeg/') &&
     file.name.endsWith('_channels.tsv')
   ) {
-    checkheader('name', 0, file, 72)
-    checkheader('type', 1, file, 72)
-    checkheader('units', 2, file, 72)
-    checkheader('low_cutoff', 3, file, 72)
-    checkheader('high_cutoff', 4, file, 72)
+    checkheader('name', 0, file, 72, 229)
+    checkheader('type', 1, file, 72, 229)
+    checkheader('units', 2, file, 72, 229)
+    checkheader('low_cutoff', 3, file, 72, 229)
+    checkheader('high_cutoff', 4, file, 72, 229)
+    checkStatusCol(rows, file, issues)
+    checkTypecol(rows, file, issues)
+  }
+
+  if (
+    file.relativePath.includes('/motion/') &&
+    file.name.endsWith('_channels.tsv')
+  ) {
+    const required = ['component', 'name', 'tracked_point', 'type', 'units']
+    const missing = required.filter((x) => !headers.includes(x))
+    if (missing.length) {
+      issues.push(
+        new Issue({
+          line: 1,
+          file: file,
+          code: 129,
+          evidence: `Missing Columns: ${missing.join(', ')}`,
+        }),
+      )
+    }
+    checkStatusCol(rows, file, issues)
+    checkTypecol(rows, file, issues)
+    checkMotionComponent(rows, file, issues)
+  }
+  if (
+    file.relativePath.includes('/nirs/') &&
+    file.name.endsWith('_channels.tsv')
+  ) {
+    checkheader('name', 0, file, 234)
+    checkheader('type', 1, file, 234)
+    checkheader('source', 2, file, 234)
+    checkheader('detector', 3, file, 234)
+    checkheader('wavelength_nominal', 4, file, 234)
+    checkheader('units', 5, file, 234)
     checkStatusCol(rows, file, issues)
     checkTypecol(rows, file, issues)
   }
@@ -297,17 +514,25 @@ const TSV = (file, contents, fileList, callback) => {
     checkheader('size', 4, file, 73)
   }
 
-  // blood.tsv
   if (
-    file.relativePath.includes('/pet/') &&
-    file.name.endsWith('_blood.tsv')
+    file.relativePath.includes('/nirs/') &&
+    file.name.endsWith('_optodes.tsv')
   ) {
+    checkheader('name', 0, file, 233)
+    checkheader('type', 1, file, 233)
+    checkheader('x', 2, file, 233)
+    checkheader('y', 3, file, 233)
+    checkheader('z', 4, file, 233)
+  }
+
+  // blood.tsv
+  if (file.relativePath.includes('/pet/') && file.name.endsWith('_blood.tsv')) {
     // Validate fields here
     checkheader('time', 0, file, 126)
   }
 
   // check for valid SI units
-  /* 
+  /*
    * Commenting out call to validation until it is inline with spec:
    * https://github.com/bids-standard/bids-specification/pull/411
   if (headers.includes('units')) {
@@ -335,7 +560,7 @@ const TSV = (file, contents, fileList, callback) => {
   }
   */
 
-  // check partcipants.tsv for age 89+
+  // check participants.tsv for age 89+
   if (file.name === 'participants.tsv') {
     checkAge89(rows, file, issues)
   }
@@ -363,6 +588,12 @@ const TSV = (file, contents, fileList, callback) => {
           // CTF or BTI data
           const fDir = path.dirname(fPath)
           pathList.push(fDir)
+        } else if (fPath.includes('_ieeg.mefd/')) {
+          // MEF3 data
+          const fDir = fPath.substring(0, fPath.indexOf('_ieeg.mefd/') + 10)
+          if (!pathList.includes(fDir)) {
+            pathList.push(fDir)
+          }
         } else {
           // all other data kinds
           pathList.push(fPath)
@@ -409,5 +640,4 @@ const TSV = (file, contents, fileList, callback) => {
   }
   callback(issues, participants, stimPaths)
 }
-
 export default TSV

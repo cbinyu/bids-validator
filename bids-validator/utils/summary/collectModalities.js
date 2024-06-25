@@ -1,12 +1,14 @@
 import type from '../type'
 
-export const collectModalities = filenames => {
+export const collectModalities = (filenames) => {
   const modalities = {
     MRI: 0,
     PET: 0,
     MEG: 0,
     EEG: 0,
     iEEG: 0,
+    Microscopy: 0,
+    NIRS: 0,
   }
   const secondary = {
     MRI_Diffusion: 0,
@@ -56,9 +58,15 @@ export const collectModalities = filenames => {
     if (type.file.isIEEG(path)) {
       modalities.iEEG++
     }
+    if (type.file.isMicroscopy(path)) {
+      modalities.Microscopy++
+    }
+    if (type.file.isNIRS(path)) {
+      modalities.NIRS++
+    }
   }
   // Order by matching file count
-  const nonZero = Object.keys(modalities).filter(a => modalities[a] !== 0)
+  const nonZero = Object.keys(modalities).filter((a) => modalities[a] !== 0)
   if (nonZero.length === 0) {
     return { primary: [], secondary: [] }
   }
@@ -74,7 +82,7 @@ export const collectModalities = filenames => {
     return modalities[b] - modalities[a]
   })
   const nonZeroSecondary = Object.keys(secondary).filter(
-    a => secondary[a] !== 0,
+    (a) => secondary[a] !== 0,
   )
   const sortedSecondary = nonZeroSecondary.sort(
     (a, b) => secondary[b] - secondary[a],

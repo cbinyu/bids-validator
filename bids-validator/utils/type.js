@@ -52,6 +52,11 @@ const megCrosstalkData = buildRegExp(file_level_rules.meg_crosstalk)
 const stimuliData = buildRegExp(file_level_rules.stimuli)
 const petData = buildRegExp(file_level_rules.pet)
 const petBlood = buildRegExp(file_level_rules.pet_blood)
+const microscopyData = buildRegExp(file_level_rules.microscopy)
+const microscopyPhotoData = buildRegExp(file_level_rules.microscopy_photo)
+const microscopyJSON = buildRegExp(file_level_rules.microscopy_json)
+const motion = buildRegExp(file_level_rules.motion)
+const nirsData = buildRegExp(file_level_rules.nirs)
 // Phenotypic data
 const phenotypicData = buildRegExp(phenotypic_rules.phenotypic_data)
 // Session level
@@ -64,6 +69,9 @@ const ieegSes = buildRegExp(session_level_rules.ieeg_ses)
 const megSes = buildRegExp(session_level_rules.meg_ses)
 const scansSes = buildRegExp(session_level_rules.scans)
 const petSes = buildRegExp(session_level_rules.pet_ses)
+const motionSes = buildRegExp(session_level_rules.motion_ses)
+const microscopySes = buildRegExp(session_level_rules.microscopy_ses)
+const nirsSes = buildRegExp(session_level_rules.nirs_ses)
 // Subject level
 const subjectLevel = buildRegExp(subject_level_rules.subject_level)
 // Top level
@@ -71,13 +79,24 @@ const rootTop = buildRegExp(top_level_rules.root_top)
 const funcTop = buildRegExp(top_level_rules.func_top)
 const aslTop = buildRegExp(top_level_rules.asl_top)
 const anatTop = buildRegExp(top_level_rules.anat_top)
+const vfaTop = buildRegExp(top_level_rules.VFA_top)
+const megreTop = buildRegExp(top_level_rules.megre_mese_top)
+const irt1Top = buildRegExp(top_level_rules.irt1_top)
+const mpmTop = buildRegExp(top_level_rules.mpm_top)
+const mtsTop = buildRegExp(top_level_rules.mts_top)
+const mtrTop = buildRegExp(top_level_rules.mtr_top)
+const mp2rageTop = buildRegExp(top_level_rules.mp2rage_top)
 const dwiTop = buildRegExp(top_level_rules.dwi_top)
 const eegTop = buildRegExp(top_level_rules.eeg_top)
 const ieegTop = buildRegExp(top_level_rules.ieeg_top)
-const multiDirFieldmap = buildRegExp(top_level_rules.multi_dir_fieldmap)
+const fmapEpiTop = buildRegExp(top_level_rules.fmap_epi_top)
+const fmapGreTop = buildRegExp(top_level_rules.fmap_gre_top)
 const otherTopFiles = buildRegExp(top_level_rules.other_top_files)
 const megTop = buildRegExp(top_level_rules.meg_top)
 const petTop = buildRegExp(top_level_rules.pet_top)
+const motionTop = buildRegExp(top_level_rules.motion_top)
+const microscopyTop = buildRegExp(top_level_rules.microscopy_top)
+const nirsTop = buildRegExp(top_level_rules.nirs_top)
 
 export default {
   /**
@@ -86,7 +105,7 @@ export default {
    * Check if a given path is valid within the
    * bids spec.
    */
-  isBIDS: function(path) {
+  isBIDS: function (path) {
     return (
       this.file.isTopLevel(path) ||
       this.file.isStimuliData(path) ||
@@ -97,13 +116,18 @@ export default {
       this.file.isFunc(path) ||
       this.file.isAsl(path) ||
       this.file.isMeg(path) ||
+      this.file.isNIRS(path) ||
       this.file.isIEEG(path) ||
       this.file.isEEG(path) ||
       this.file.isBehavioral(path) ||
       this.file.isFieldMap(path) ||
       this.file.isPhenotypic(path) ||
       this.file.isPET(path) ||
-      this.file.isPETBlood(path)
+      this.file.isPETBlood(path) ||
+      this.file.isMOTION(path) ||
+      this.file.isMicroscopy(path) ||
+      this.file.isMicroscopyPhoto(path) ||
+      this.file.isMicroscopyJSON(path)
     )
   },
 
@@ -114,26 +138,37 @@ export default {
     /**
      * Check if the file has appropriate name for a top level file
      */
-    isTopLevel: function(path) {
+    isTopLevel: function (path) {
       return (
         rootTop.test(path) ||
         funcTop.test(path) ||
         aslTop.test(path) ||
         dwiTop.test(path) ||
         anatTop.test(path) ||
-        multiDirFieldmap.test(path) ||
+        vfaTop.test(path) ||
+        megreTop.test(path) ||
+        irt1Top.test(path) ||
+        mpmTop.test(path) ||
+        mtsTop.test(path) ||
+        mtrTop.test(path) ||
+        mp2rageTop.test(path) ||
+        fmapEpiTop.test(path) ||
+        fmapGreTop.test(path) ||
         otherTopFiles.test(path) ||
         megTop.test(path) ||
         eegTop.test(path) ||
         ieegTop.test(path) ||
-        petTop.test(path)
+        petTop.test(path) ||
+        motionTop.test(path) ||
+        nirsTop.test(path) ||
+        microscopyTop.test(path)
       )
     },
 
     /**
      * Check if file is a data file
      */
-    isDatafile: function(path) {
+    isDatafile: function (path) {
       return (
         this.isAssociatedData(path) ||
         this.isTSV(path) ||
@@ -145,32 +180,32 @@ export default {
     /**
      * Check if file is appropriate associated data.
      */
-    isAssociatedData: function(path) {
+    isAssociatedData: function (path) {
       return associatedData.test(path)
     },
 
-    isTSV: function(path) {
+    isTSV: function (path) {
       return path.endsWith('.tsv')
     },
 
-    isContinousRecording: function(path) {
+    isContinousRecording: function (path) {
       return path.endsWith('.tsv.gz')
     },
 
-    isStimuliData: function(path) {
+    isStimuliData: function (path) {
       return stimuliData.test(path)
     },
 
     /**
      * Check if file is phenotypic data.
      */
-    isPhenotypic: function(path) {
+    isPhenotypic: function (path) {
       return phenotypicData.test(path)
     },
     /**
      * Check if the file has appropriate name for a session level
      */
-    isSessionLevel: function(path) {
+    isSessionLevel: function (path) {
       return (
         conditionalMatch(scansSes, path) ||
         conditionalMatch(funcSes, path) ||
@@ -178,23 +213,26 @@ export default {
         conditionalMatch(anatSes, path) ||
         conditionalMatch(dwiSes, path) ||
         conditionalMatch(megSes, path) ||
+        conditionalMatch(nirsSes, path) ||
         conditionalMatch(eegSes, path) ||
         conditionalMatch(ieegSes, path) ||
-        conditionalMatch(petSes, path)
+        conditionalMatch(petSes, path) ||
+        conditionalMatch(motionSes, path) ||
+        conditionalMatch(microscopySes, path)
       )
     },
 
     /**
      * Check if the file has appropriate name for a subject level
      */
-    isSubjectLevel: function(path) {
+    isSubjectLevel: function (path) {
       return subjectLevel.test(path)
     },
 
     /**
      * Check if the file has a name appropriate for an anatomical scan
      */
-    isAnat: function(path) {
+    isAnat: function (path) {
       return (
         conditionalMatch(anatNonparametric, path) ||
         conditionalMatch(anatParametric, path) ||
@@ -211,14 +249,14 @@ export default {
     /**
      * Check if the file has a name appropriate for a diffusion scan
      */
-    isDWI: function(path) {
+    isDWI: function (path) {
       return conditionalMatch(dwiData, path)
     },
 
     /**
      * Check if the file has a name appropriate for a fieldmap scan
      */
-    isFieldMap: function(path) {
+    isFieldMap: function (path) {
       return (
         conditionalMatch(fmapGre, path) ||
         conditionalMatch(fmapPepolarAsl, path) ||
@@ -230,7 +268,7 @@ export default {
       )
     },
 
-    isFieldMapMainNii: function(path) {
+    isFieldMapMainNii: function (path) {
       return (
         !path.endsWith('.json') &&
         /* isFieldMap */
@@ -247,7 +285,7 @@ export default {
     /**
      * Check if the file has a name appropriate for a functional scan
      */
-    isFunc: function(path) {
+    isFunc: function (path) {
       return (
         conditionalMatch(func, path) ||
         conditionalMatch(funcPhaseDeprecated, path) ||
@@ -256,43 +294,62 @@ export default {
       )
     },
 
-    isAsl: function(path) {
+    isAsl: function (path) {
       return conditionalMatch(aslData, path)
     },
 
-    isPET: function(path) {
+    isPET: function (path) {
       return conditionalMatch(petData, path)
     },
 
-    isPETBlood: function(path) {
+    isPETBlood: function (path) {
       return conditionalMatch(petBlood, path)
     },
 
-    isMeg: function(path) {
+    isMeg: function (path) {
       return (
         conditionalMatch(megData, path) ||
         conditionalMatch(megCalibrationData, path) ||
         conditionalMatch(megCrosstalkData, path)
       )
     },
+    isNIRS: function (path) {
+      return conditionalMatch(nirsData, path)
+    },
 
-    isEEG: function(path) {
+    isEEG: function (path) {
       return conditionalMatch(eegData, path)
     },
 
-    isIEEG: function(path) {
+    isIEEG: function (path) {
       return conditionalMatch(ieegData, path)
     },
 
-    isBehavioral: function(path) {
+    isMOTION: function (path) {
+      return conditionalMatch(motion, path)
+    },
+
+    isMicroscopy: function (path) {
+      return conditionalMatch(microscopyData, path)
+    },
+
+    isMicroscopyPhoto: function (path) {
+      return conditionalMatch(microscopyPhotoData, path)
+    },
+
+    isMicroscopyJSON: function (path) {
+      return conditionalMatch(microscopyJSON, path)
+    },
+
+    isBehavioral: function (path) {
       return conditionalMatch(behavioralData, path)
     },
 
-    isFuncBold: function(path) {
+    isFuncBold: function (path) {
       return conditionalMatch(funcBoldData, path)
     },
 
-    hasModality: function(path) {
+    hasModality: function (path) {
       return (
         this.isAnat(path) ||
         this.isDWI(path) ||
@@ -301,12 +358,17 @@ export default {
         this.isFunc(path) ||
         this.isAsl(path) ||
         this.isMeg(path) ||
+        this.isNIRS(path) ||
         this.isEEG(path) ||
         this.isIEEG(path) ||
         this.isBehavioral(path) ||
         this.isFuncBold(path) ||
         this.isPET(path) ||
-        this.isPETBlood(path)
+        this.isPETBlood(path) ||
+        this.isMicroscopy(path) ||
+        this.isMicroscopyPhoto(path) ||
+        this.isMicroscopyJSON(path) ||
+        this.isMOTION(path)
       )
     },
   },
@@ -327,7 +389,7 @@ export default {
    * sub-
    * ses-
    */
-  getPathValues: function(path) {
+  getPathValues: function (path) {
     var values = {},
       match
 
@@ -344,7 +406,7 @@ export default {
 }
 
 function conditionalMatch(expression, path) {
-  var match = expression.exec(path)
+  const match = expression.exec(path)
 
   // we need to do this because JS does not support conditional groups
   if (match) {

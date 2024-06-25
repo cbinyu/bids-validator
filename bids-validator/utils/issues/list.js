@@ -622,6 +622,12 @@ export default {
     reason:
       'This dataset contains remote files. If you would like to validate with remote files, use the --remoteFiles option.',
   },
+  115: {
+    key: 'EMPTY_DATASET_NAME',
+    severity: 'warning',
+    reason:
+      'The Name field of dataset_description.json is present but empty of visible characters.',
+  },
   123: {
     key: 'INVALID JSON ENCODING',
     severity: 'error',
@@ -689,7 +695,7 @@ export default {
     key: 'POST_LABELING_DELAY_MUST_DEFINE',
     severity: 'error',
     reason:
-      "You should define 'PostLabelingDelay' for this file. 'PostLabelingDelay' is the time, in seconds, after the the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
+      "You should define 'PostLabelingDelay' for this file. 'PostLabelingDelay' is the time, in seconds, after the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
   },
   136: {
     key: 'BACKGROUND_SUPPRESSION_MUST_DEFINE',
@@ -710,17 +716,18 @@ export default {
       "It is recommended to define 'PulseSequenceDetails' for this file. 'PulseSequenceDetails' is the information beyond pulse sequence type that identifies the specific pulse sequence used (for example, 'Standard Siemens Sequence distributed with the VB17 software', 'Siemens WIP ### version #.##', or 'Sequence written by X using a version compiled on MM/DD/YYYY').",
   },
   139: {
-    key: '139_EMPTY',
-    severity: 'warning',
-    reason: '',
+    key: 'BLACKLISTED_MODALITY',
+    severity: 'error',
+    reason:
+      'Found a modality that has been blacklisted through validator configuration.',
   },
   140: {
     key: '140_EMPTY',
     severity: 'warning',
     reason: '',
   },
-  139: {
-    key: '140_EMPTY',
+  141: {
+    key: '141_EMPTY',
     severity: 'warning',
     reason: '',
   },
@@ -854,13 +861,13 @@ export default {
     key: 'POST_LABELING_DELAY_NOT_MATCHING_NIFTI',
     severity: 'error',
     reason:
-      "The number of values for 'PostLabelingDelay' for this file does not match the 4th dimension of the NIfTI header. 'PostLabelingDelay' is the time, in seconds, after the the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
+      "The number of values for 'PostLabelingDelay' for this file does not match the 4th dimension of the NIfTI header. 'PostLabelingDelay' is the time, in seconds, after the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
   },
   174: {
     key: 'POST_LABELING_DELAY_NOT_MATCHING_ASLCONTEXT_TSV',
     severity: 'error',
     reason:
-      "'The number of values for PostLabelingDelay' for this file does not match the number of volumes in the 'sub-<label>[_ses-<label>][_acq-<label>][_rec-<label>][_run-<index>]_aslcontext.tsv'.'PostLabelingDelay' is the time, in seconds, after the the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
+      "'The number of values for PostLabelingDelay' for this file does not match the number of volumes in the 'sub-<label>[_ses-<label>][_acq-<label>][_rec-<label>][_run-<index>]_aslcontext.tsv'.'PostLabelingDelay' is the time, in seconds, after the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
   },
   175: {
     key: 'LABELLING_DURATION_NOT_MATCHING_ASLCONTEXT_TSV',
@@ -920,7 +927,7 @@ export default {
     key: 'POST_LABELING_DELAY_GREATER',
     severity: 'warning',
     reason:
-      "'PostLabelingDelay' is greater than 10, are you sure it's expressed in seconds? 'PostLabelingDelay' is the time, in seconds, after the the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
+      "'PostLabelingDelay' is greater than 10, are you sure it's expressed in seconds? 'PostLabelingDelay' is the time, in seconds, after the end of the labeling (for (P)CASL) or middle of the labeling pulse (for PASL) until the middle of the excitation pulse applied to the imaging slab (for 3D acquisition) or first slice (for 2D acquisition). Can be a number (for a single-PLD time series) or an array of numbers (for multi-PLD and Look-Locker). In the latter case, the array of numbers contains the PLD of each volume (i.e. each 'control' and 'label') in the acquisition order. Any image within the time-series without a PLD (e.g. an 'm0scan') is indicated by a zero. Based on DICOM Tags 0018,9079 Inversion Times and 0018,0082 InversionTime.",
   },
   186: {
     key: 'BOLUS_CUT_OFF_DELAY_TIME_GREATER',
@@ -1041,5 +1048,140 @@ export default {
     severity: 'warning',
     reason:
       'The recommended file /README is very small. Please consider expanding it with additional information about the dataset.',
+  },
+  214: {
+    key: 'SAMPLES_TSV_MISSING',
+    severity: 'error',
+    reason:
+      'The compulsory file /samples.tsv is missing. See Section 03 (Modality agnostic files) of the BIDS specification.',
+  },
+  215: {
+    key: 'SAMPLE_ID_PATTERN',
+    severity: 'error',
+    reason:
+      'sample_id column labels must consist of the pattern "sample-<sample_id>".',
+  },
+  216: {
+    key: 'SAMPLE_ID_COLUMN',
+    severity: 'error',
+    reason: "Samples .tsv files must have a 'sample_id' column.",
+  },
+  217: {
+    key: 'PARTICIPANT_ID_COLUMN',
+    severity: 'error',
+    reason: "Samples .tsv files must have a 'participant_id' column.",
+  },
+  218: {
+    key: 'SAMPLE_TYPE_COLUMN',
+    severity: 'error',
+    reason: "Samples .tsv files must have a 'sample_type' column.",
+  },
+  219: {
+    key: 'SAMPLE_TYPE_VALUE',
+    severity: 'error',
+    reason:
+      'sample_type MUST consist of one of the following values: cell line, in vitro differentiated cells, primary cell, cell-free sample, cloning host, tissue, whole organisms, organoid or technical sample.',
+  },
+  220: {
+    key: 'SAMPLE_ID_DUPLICATE',
+    severity: 'error',
+    reason:
+      'Each sample from a same subject MUST be described by one and only one row.',
+  },
+  221: {
+    key: 'PIXEL_SIZE_INCONSISTENT',
+    severity: 'error',
+    reason:
+      'PixelSize need to be consistent with PhysicalSizeX, PhysicalSizeY and PhysicalSizeZ OME metadata fields',
+  },
+  222: {
+    key: 'INVALID_PIXEL_SIZE_UNIT',
+    severity: 'warning',
+    reason: 'PixelSize consistency is only validated for "mm", "µm" and "nm".',
+  },
+  223: {
+    key: 'CHUNK_TRANSFORMATION_MATRIX_MISSING',
+    severity: 'warning',
+    reason:
+      "It is recommended to define 'ChunkTransformationMatrix' for this file.",
+  },
+  224: {
+    key: 'OPTIONAL_FIELD_INCONSISTENT',
+    severity: 'error',
+    reason: 'Optional JSON field is not consistent with the OME-TIFF metadata',
+  },
+  225: {
+    key: 'NO_VALID_JSON',
+    severity: 'error',
+    reason: 'No valid JSON file found for this file',
+  },
+  226: {
+    key: 'UNSUPPORTED_BIG_TIFF',
+    severity: 'warning',
+    reason: 'Metadata consistency check skipped for BigTiff OME-TIFF file',
+  },
+  227: {
+    key: 'INCONSISTENT_TIFF_EXTENSION',
+    severity: 'error',
+    reason: 'Inconsistent TIFF file type and extension',
+  },
+  228: {
+    key: 'MULTIPLE_README_FILES',
+    severity: 'error',
+    reason:
+      'A BIDS dataset MUST NOT contain more than one `README` file (with or without extension) at its root directory.',
+  },
+  229: {
+    key: 'INCORRECT_ORDER_TSV_COLUMN_CHANNELS_IEEG',
+    severity: 'error',
+    reason:
+      "The column names of the IEEG channels file must be in the following order ['name', 'type', 'units', 'low_cutoff', 'high_cutoff']",
+  },
+  230: {
+    key: 'INCORRECT_ORDER_TSV_COLUMN_CHANNELS_EEG',
+    severity: 'error',
+    reason:
+      "The column names of the EEG channels file must be in the following order ['name', 'type', 'units']",
+  },
+  231: {
+    key: 'TSV_COLUMN_HEADER_DUPLICATE',
+    severity: 'error',
+    reason:
+      'Two elements in the first row of a TSV are the same. Each column header must be unique.',
+  },
+  232: {
+    key: 'TSV_COLUMN_HEADER_NA',
+    severity: 'error',
+    reason:
+      'An element in a tsv header is "n/a". A different header name should be chosen.',
+  },
+  233: {
+    key: 'MISSING_TSV_COLUMN_NIRS_OPTODES',
+    severity: 'error',
+    reason:
+      "The column names of the optodes file must begin with ['name', 'type', 'x', 'y', 'z']",
+  },
+  234: {
+    key: 'MISSING_TSV_COLUMN_NIRS_CHANNELS',
+    severity: 'error',
+    reason:
+      "The column names of the channels file must begin with ['name', 'type', 'source', 'detector', 'wavelength_nominal', 'units']",
+  },
+  235: {
+    key: 'MOTION_COMPONENT_IN_WRONG_COLUMN',
+    severity: 'error',
+    reason:
+      "The 'component' column must be the second column in the channels.tsv file.",
+  },
+  236: {
+    key: 'MOTION_COMPONENT_INVLAID_VALUE',
+    severity: 'error',
+    reason:
+      "Values in the 'component' column must be one of ['x', 'y', 'z', 'quat_x', 'quat_y', 'quat_z', 'quat_w', 'n/a'].",
+  },
+  237: {
+    key: 'PET_JSON_KEY_REQUIRED',
+    severity: 'error',
+    reason: 'A PET image JSON sidecar is missing a required field.',
   },
 }
